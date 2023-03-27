@@ -110,7 +110,7 @@ window.onload = function () {
             ctx.beginPath();
         ctx.save();
         ctx.arc(this.x, this.y, this.diameter / 2, 0, 2 * Math.PI);
-        ctx.fillStyle = "green";
+        ctx.fillStyle = "red";
         ctx.fill();
         ctx.stroke();
         ctx.restore();
@@ -337,7 +337,7 @@ window.onload = function () {
     function displayLifes() {
         // TU CÓDIGO AQUÍ
         ctx.save();
-        ctx.fillStyle = "red";
+        ctx.fillStyle = "yellow";
         ctx.fillText(`Vidas: ${lifes}`, w-40, 8);
         ctx.restore();
     }
