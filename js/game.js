@@ -147,6 +147,7 @@ window.onload = function () {
     var lastTime;
     var fpsContainer;
     var fps, oldTime = 0;
+    var music;
 
     //  var speed = 300; // px/s 
     //  var vausWidth = 30,   vausHeight = 10;
@@ -473,15 +474,27 @@ window.onload = function () {
         });
     }
 
+    function loadAssets(callback){
+        // Cargar sonido asíncronamente usando howler.js
+	    music = new Howl({
+		    urls: ['http://localhost/assets/Game_Start.ogg'],
+		  volume: 1,
+		  onload: function() {
+          	callback();
+          }
+         }); // new Howl
+    }
+
     function init(){
+        //loadAssets(startNewGame);
         startNewGame();
-        requestAnimationFrame(mainLoop);
     }
 
     function startNewGame(){
         initTerrain();
         balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
         createBricks();
+        //music.play();
         requestAnimationFrame(mainLoop);
     }
     
