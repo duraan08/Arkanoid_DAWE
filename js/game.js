@@ -148,6 +148,7 @@ window.onload = function () {
     var fpsContainer;
     var fps, oldTime = 0;
     var music;
+    var sonidos;
 
     //  var speed = 300; // px/s 
     //  var vausWidth = 30,   vausHeight = 10;
@@ -290,6 +291,8 @@ window.onload = function () {
         let res = intersects(b.x, b.y, b.x+ANCHURA_LADRILLO, b.y+ALTURA_LADRILLO, ball.x, ball.y, ball.diameter/2 );
 
         if(res.c) { // si hay colision
+            //Insertamos sonido
+            sonidos.play("point");
             switch(res.d) { // lado del choque
             case "bottom":
                 ball.angle = -ball.angle;
@@ -388,6 +391,7 @@ window.onload = function () {
                 if (circRectsOverlap(paddle.x, paddle.y, paddle.width, paddle.height, ball.x, ball.y, ball.diameter/2)) {
             ball.y = paddle.y - ball.diameter/2;
             ball.angle = -ball.angle;
+            sonidos.play("paddle");
         }
         ball.draw(ctx);
         }
@@ -477,24 +481,38 @@ window.onload = function () {
     function loadAssets(callback){
         // Cargar sonido asíncronamente usando howler.js
 	    music = new Howl({
-		    urls: ['http://localhost/assets/Game_Start.ogg'],
+		    urls: ['music/Game_Start.ogg'],
 		  volume: 1,
 		  onload: function() {
           	callback();
           }
          }); // new Howl
+
+         sonidos = new Howl({
+            urls : ['music/sounds.mp3'],
+            volume : 1,
+            sprite : {
+                point: [0,700],
+                salir: [1000,1700],
+                empezar: [3000,2700],
+                paddle : [11200, 700],
+            },
+            oload : function(){
+                callback();
+            }
+        });
     }
 
     function init(){
-        //loadAssets(startNewGame);
-        startNewGame();
+        loadAssets(startNewGame);
+        //startNewGame();
     }
 
     function startNewGame(){
         initTerrain();
         balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
         createBricks();
-        //music.play();
+        music.play();
         requestAnimationFrame(mainLoop);
     }
     
