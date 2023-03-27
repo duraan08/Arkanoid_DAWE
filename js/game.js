@@ -347,16 +347,18 @@ window.onload = function () {
         var incX = Math.ceil(calcDistanceToMove(delta, paddle.speed));
         // TU CÓDIGO AQUÍ
         if (inputStates.left == 1) {
-        paddle.x = paddle.x - incX;
+            paddle.x = paddle.x - incX;
+            //ball.angle = ball.angle * (ball.angle > 0 ? 0.5 : 1.5);
         }
         if (inputStates.right == 1) {
-        paddle.x = paddle.x + incX;
+            paddle.x = paddle.x + incX;
+            //ball.angle = ball.angle * (ball.angle < 0 ? 0.5 : 1.5)
         }
         if (paddle.x < 0) {
-        paddle.x = 0;
+            paddle.x = 0;
         }
         if (paddle.x + paddle.width > w) {
-        paddle.x = w - paddle.width;
+            paddle.x = w - paddle.width;
         }
     }
 
@@ -388,12 +390,17 @@ window.onload = function () {
         // TU CÓDIGO AQUÍ
         // Test if the paddle collides
         // NUEVO: Gestiona el rebote de la bola con Vaus usando los atributos de paddle
-                if (circRectsOverlap(paddle.x, paddle.y, paddle.width, paddle.height, ball.x, ball.y, ball.diameter/2)) {
+        if (circRectsOverlap(paddle.x, paddle.y, paddle.width, paddle.height, ball.x, ball.y, ball.diameter/2)) {
             ball.y = paddle.y - ball.diameter/2;
             ball.angle = -ball.angle;
+            if (inputStates.right){
+                ball.angle = ball.angle * (ball.angle < 0 ? 0.5 : 1.5);
+            }else if (inputStates.left){
+                ball.angle = ball.angle * (ball.angle > 0 ? 0.5 : 1.5);
+            }
             sonidos.play("paddle");
         }
-        ball.draw(ctx);
+            ball.draw(ctx);
         }
     }
 
