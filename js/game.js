@@ -8,8 +8,8 @@ window.onload = function () {
     // var x = 130,
     //  y = 135; // posición inicial de Vaus
     var delta;
-    var ANCHURA_LADRILLO = 20,
-        ALTURA_LADRILLO = 10;
+    //var ANCHURA_LADRILLO = 16,
+        //ALTURA_LADRILLO = 8;
 
     // var frames = 30;
 
@@ -62,51 +62,32 @@ window.onload = function () {
     }
 
     function testCollisionWithWalls(ball, w, h) {
-    // TU CÓDIGO AQUÍ
-    if (ball.x > w - ball.diameter / 2) {
-        ball.angle = -ball.angle + Math.PI;
-        ball.x = w - ball.diameter / 2;
-        return false;
-    }
-    // abajo
-    if (ball.y > h - ball.diameter / 2) {
-        ball.angle = -ball.angle;
-        ball.y = h - ball.diameter / 2;
-        return true;
-    }
-    // izquierda
-    if (ball.x < ball.diameter / 2) {
-        ball.angle = -ball.angle + Math.PI;
-        ball.x = ball.diameter / 2;
-        return false;
-    }
-    // arriba
-    if (ball.y < ball.diameter / 2) {
-        ball.angle = -ball.angle;
-        ball.y = ball.diameter / 2;
-        return false;
-    }
-
-    }
-
-    function Brick(x, y, color) {
-    // TU CÓDIGO AQUÍ
-        this.x = x;
-    this.y = y;
-    this.color = color;
-    }
-
-    Brick.prototype = {
-    draw: function(ctx) {
         // TU CÓDIGO AQUÍ
-            ctx.save();
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, ANCHURA_LADRILLO, ALTURA_LADRILLO);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
+        if (ball.x > w - ball.diameter / 2) {
+            ball.angle = -ball.angle + Math.PI;
+            ball.x = w - ball.diameter / 2;
+            return false;
+        }
+        // abajo
+        if (ball.y > h - ball.diameter / 2) {
+            ball.angle = -ball.angle;
+            ball.y = h - ball.diameter / 2;
+            return true;
+        }
+        // izquierda
+        if (ball.x < ball.diameter / 2) {
+            ball.angle = -ball.angle + Math.PI;
+            ball.x = ball.diameter / 2;
+            return false;
+        }
+        // arriba
+        if (ball.y < ball.diameter / 2) {
+            ball.angle = -ball.angle;
+            ball.y = ball.diameter / 2;
+            return false;
+        }
+
     }
-    };
 
 
     // función auxiliar
@@ -118,7 +99,7 @@ window.onload = function () {
 
     function Ball(x, y, angle, v, diameter, sticky) {
     // TU CÓDIGO AQUÍ
-        this.x = x;
+    this.x = x;
     this.y = y;
     this.angle = angle;
     this.v = v;
@@ -137,15 +118,15 @@ window.onload = function () {
 
     this.move = function(x, y) {
         // TU CÓDIGO AQUÍ
-            if (x != undefined && y != undefined) {
-        this.x = x;
-        this.y = y;
+        if (x != undefined && y != undefined) {
+            this.x = x;
+            this.y = y;
         }
         else {
-        var incX = this.v * Math.cos(this.angle);
-        var incY = this.v * Math.sin(this.angle);
-        this.x += calcDistanceToMove(delta, incX);
-        this.y -= calcDistanceToMove(delta, incY);
+            var incX = this.v * Math.cos(this.angle);
+            var incY = this.v * Math.sin(this.angle);
+            this.x += calcDistanceToMove(delta, incX);
+            this.y -= calcDistanceToMove(delta, incY);
         }
     };
 
@@ -153,8 +134,8 @@ window.onload = function () {
 
     // Inits
     window.onload = function init() {
-    var game = new GF();
-    game.start();
+        var game = new GF();
+        game.start();
     };
 
 
@@ -173,6 +154,8 @@ window.onload = function () {
     var balls = [];
     var bricks = [];
     var bricksLeft;
+
+    var terrainPattern;
 
     var lifes = 3;
 
@@ -197,7 +180,8 @@ window.onload = function () {
         width: 32,
         height: 8,
         speed: 300, // pixels/s 
-        sticky: false
+        sticky: false,
+        sprite: new Sprite('img/sprites.png', [224,40], [32,8], 16, [0,1])
     };
 
 
@@ -293,8 +277,8 @@ window.onload = function () {
     // clears the canvas content
     function clearCanvas() {
         ctx.clearRect(0, 0, w, h);
-        // ctx.fillStyle = 'green';
-        // ctx.fillRect(15,15,4,4);    
+        ctx.fillStyle = terrainPattern;
+        ctx.fillRect(0, 0, w, h);    
     }
 
 
@@ -332,17 +316,17 @@ window.onload = function () {
         return bricks.length;
     }
 
-
-
     // Función para pintar la raqueta Vaus
     function drawVaus(x, y) {
         // TU CÓDIGO AQUÍ
-        ctx.beginPath();
+        //ctx.beginPath();
         ctx.save();
-        ctx.fillStyle = "black";
-        ctx.fillRect(x, y, 30, 10);
-        ctx.fill();
-        ctx.stroke();
+        ctx.translate(x,y);
+        paddle.sprite.render(ctx);
+        //ctx.fillStyle = "black";
+        //ctx.fillRect(x, y, 30, 10);
+        //ctx.fill();
+        //ctx.stroke();
         ctx.restore();
     }
 
@@ -355,8 +339,7 @@ window.onload = function () {
     }
 
     var updatePaddlePosition = function() {
-
-
+        paddle.sprite.update(delta);
         var incX = Math.ceil(calcDistanceToMove(delta, paddle.speed));
         // TU CÓDIGO AQUÍ
         if (inputStates.left == 1) {
@@ -464,6 +447,14 @@ window.onload = function () {
         ctx.fillText("GAME OVER", w/2 - 35, h/2 + 5); 
         }       
     };
+
+    function initTerrain(){
+        //Se obtiene la imagen que queremos para el fondo de pantalla
+        terrain = new Sprite('img/sprites.png', [97, 80], [31, 32]);
+        //Creamos el wallpaper repitiendo la imagen escogida
+        terrainPattern = ctx.createPattern(terrain.image(), 'repeat');
+    }
+
     function inicializarGestorTeclado() {
         document.addEventListener('keydown', (e) => {
         if (e.code === "ArrowLeft") {
@@ -481,44 +472,28 @@ window.onload = function () {
         }
         });
     }
+
+    function init(){
+        startNewGame();
+        requestAnimationFrame(mainLoop);
+    }
+
+    function startNewGame(){
+        initTerrain();
+        balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
+        createBricks();
+        requestAnimationFrame(mainLoop);
+    }
     
     var start = function() {
         // adds a div for displaying the fps value
         fpsContainer = document.createElement('div');
         document.body.appendChild(fpsContainer);
 
-        // TU CÓDIGO AQUÍ
-        // Crea un listener para gestionar la pulsación
-        // de izquierda, derecha o espacio
-        // y actualiza inputStates.left .right o .space 
-        // el listener será para keydown (pulsar)
-        // y otro para keyup
-            inicializarGestorTeclado();
+        inicializarGestorTeclado();
 
-        // TU CÓDIGO AQUÍ
-        // Instancia una bola con los parámetros del enunciado e introdúcela en el array balls
-            new_ball = new Ball(10, 70, Math.PI / 3, 100, 6, false);
-            balls.push(new_ball);
-        createBricks();
-
-        // start the animation
-        requestAnimationFrame(mainLoop);
-
-        test('Comprobar Game Over', function(assert) {
-        var done = assert.async();
-
-        setTimeout(function() {
-            assert.ok(paddle.dead == true, "Passed!");
-            assert.pixelEqual(canvas, 10, 10, 0,0,0,255, "Passed!");
-
-            done();
-        }, 10000);  
-
-        });
-
-
-
-
+        resources.load(['img/sprites.png']);
+        resources.onReady(init);
     };
 
     //our GameFramework returns a public API visible from outside its scope
