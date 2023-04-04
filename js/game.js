@@ -161,6 +161,8 @@ window.onload = function () {
 
     var lifes = 3;
 
+    var bonuses = [];
+
     // vars for handling inputs
     var inputStates = {};
 
@@ -410,6 +412,32 @@ window.onload = function () {
         return aux;
 
     }
+
+    function Bonus(){
+        this.type = 'C';
+        this.x = 50;
+        this.y = 50;
+        this.width= 16;
+        this.height= 8;
+        this.speed= 80;
+        this.sprite= new Sprite('img/sprites.png', [224,0], [16,8], 0.5, [0,1,2,3]);
+    };
+
+    Bonus.prototype = {
+        draw : function(ctx){
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            this.sprite.render(ctx);
+
+            ctx.restore();
+        },
+        move : function(){
+            this.sprite().update(delta);
+            this.y += calcDistanceToMove(delta, this.speed);
+        }
+    };
+
+
     var mainLoop = function(time) {
         //main function, called each frame 
         measureFPS(time);
@@ -435,7 +463,8 @@ window.onload = function () {
             if(currentGameState == gameStates[0]){
         // Mover Vaus de izquierda a derecha
         updatePaddlePosition();
-
+        
+        //Modificar la bola
         updateBalls();
 
         // draw Vaus
@@ -443,8 +472,12 @@ window.onload = function () {
 
         // dibujar ladrillos
         drawBricks();
-
+        
+        //Mostrar las vidas
         displayLifes();
+
+        //Modificar el bonus
+        //updateBonus();
 
         // call the animation loop every 1/60th of second
         requestAnimationFrame(mainLoop);
@@ -462,7 +495,7 @@ window.onload = function () {
 
     function initTerrain(){
         //Se obtiene la imagen que queremos para el fondo de pantalla
-        terrain = new Sprite('img/sprites.png', [97, 80], [31, 32]);
+        terrain = new Sprite('img/sprites.png', [49, 80], [31, 31]);
         //Creamos el wallpaper repitiendo la imagen escogida
         terrainPattern = ctx.createPattern(terrain.image(), 'repeat');
     }
@@ -520,6 +553,7 @@ window.onload = function () {
         balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
         createBricks();
         music.play();
+        bonuses.push(new Bonus());
         requestAnimationFrame(mainLoop);
     }
     
