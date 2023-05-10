@@ -1,3 +1,4 @@
+//Variables de las dimensiones del ladrillo
 var ANCHURA_LADRILLO = 16;
 var ALTURA_LADRILLO = 8;
 //Array de colores
@@ -17,7 +18,7 @@ function Brick(x, y, color) {
 Brick.prototype = {
 draw: function(ctx) {
     // TU CÓDIGO AQUÍ
-        ctx.save();
+    ctx.save();
     ctx.fillStyle = this.color;
     ctx.translate(this.x, this.y);
     //ctx.fillRect(this.x, this.y, ANCHURA_LADRILLO, ALTURA_LADRILLO);
