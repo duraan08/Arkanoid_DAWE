@@ -160,7 +160,8 @@ window.onload = function () {
 		//Estados del juego
 		var gameStates = {
 			0: "running",
-			1: "gameOver"
+			1: "gameOver",
+			2: "win"
 		};
 
 		var currentGameState = "running" ;
@@ -278,6 +279,10 @@ window.onload = function () {
 				//Insertamos sonido
 				sonidos.play("point");
 				points = points + 1000;
+				//Si ha roto todos los ladrillos
+				if(points == 10000){
+					currentGameState = gameStates[2];
+				}
 				//Lado del choque
 				switch(res.d) {
 				case "bottom":
@@ -319,7 +324,7 @@ window.onload = function () {
 		function displayLifes() {
 			ctx.save();
 			ctx.fillStyle = "yellow";
-			ctx.fillText(`Vidas: ${lifes}`, w-40, 8);
+			ctx.fillText(`Vidas: ${lifes-1}`, w-40, 8);
 			ctx.restore();
 		}
 
@@ -470,6 +475,18 @@ window.onload = function () {
 
 				// call the animation loop every 1/60th of second
 				requestAnimationFrame(mainLoop);
+			}
+			// SI currentGameState = win
+			//Si ha ganado
+			else if(currentGameState == gameStates[2]){
+				ctx.fillStyle = "orange";
+				ctx.fillRect(0, 0, w, h);
+
+				ctx.fillStyle = "blue";
+				ctx.fillText("FELICIDADES HAS GANADO!", w/2 - 70 , h/2 - 30);
+				ctx.fillText("PUNTUACIÓN FINAL", w/2 - 50, h/2 - 15);
+				var puntosfinal = points * lifes;
+				ctx.fillText(`${puntosfinal}`, w/2 - 15 , h/2);
 			}
 			// PERO Si currentGameState = GAME OVER
 			// PINTAR la pantalla de negro y escribir GAME OVER
