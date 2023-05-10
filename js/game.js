@@ -151,6 +151,8 @@ window.onload = function () {
 
 		var lifes = 3;
 
+		var points = 0;
+
 		var bonuses = [];
 
 		var inputStates = {};
@@ -269,13 +271,14 @@ window.onload = function () {
 		//Comprueba si hay intersección con todos los ladrillos
 			for(let i = 0; i < bricks.length; i++)  {
 			b = bricks[i];
-		//Llama a la función intersec que devuelve si hay o no intersección y el lado del ladrillo con el que hay intersección
+			//Llama a la función intersec que devuelve si hay o no intersección y el lado del ladrillo con el que hay intersección
 			let res = intersects(b.x, b.y, b.x+ANCHURA_LADRILLO, b.y+ALTURA_LADRILLO, ball.x, ball.y, ball.diameter/2 );
-		 //Si hay colisión
+		 	//Si hay colisión
 			if(res.c) {
 				//Insertamos sonido
 				sonidos.play("point");
-			//Lado del choque
+				points = points + 1000;
+				//Lado del choque
 				switch(res.d) {
 				case "bottom":
 					ball.angle = -ball.angle;
@@ -317,6 +320,14 @@ window.onload = function () {
 			ctx.save();
 			ctx.fillStyle = "yellow";
 			ctx.fillText(`Vidas: ${lifes}`, w-40, 8);
+			ctx.restore();
+		}
+
+		//Función para pintar la puntuación en el canvas
+		function displayPoints() {
+			ctx.save();
+			ctx.fillStyle = "white";
+			ctx.fillText(`Puntos: ${points}`, 5, 8);
 			ctx.restore();
 		}
 
@@ -450,6 +461,9 @@ window.onload = function () {
 				
 				//Mostrar las vidas
 				displayLifes();
+
+				//Mostrar los puntos
+				displayPoints();
 
 				//Modificar el bonus
 				//updateBonus();
