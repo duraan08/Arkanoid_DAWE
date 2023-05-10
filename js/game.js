@@ -5,14 +5,9 @@ window.onload = function () {
     var w = canvas.width;
     console.log(w);
     var h = canvas.height;
-    // var x = 130,
-    //  y = 135; // posición inicial de Vaus
     var delta;
-    //var ANCHURA_LADRILLO = 16,
-        //ALTURA_LADRILLO = 8;
-
-    // var frames = 30;
-
+	
+    //Función para saber si hay intersección entre el ladrillo y la bola
     function intersects(left, up, right, bottom, cx, cy, radius )
     {
     var closestX = (cx < left ? left : (cx > right ? right : cx));
@@ -40,11 +35,11 @@ window.onload = function () {
         side = "left";
         break;
     }
-
+    //Devuelve el lado del ladrillo en el que ha colisionado
     return result = { c : ( dx * dx + dy * dy ) <= radius * radius, d : side  };
     }
 
-    // Collisions between rectangle and circle
+    //Función para saber si hay contacto entre la raqueta y la bola
     function circRectsOverlap(x0, y0, w0, h0, cx, cy, r) {
     var testX = cx;
     var testY = cy;
@@ -60,9 +55,10 @@ window.onload = function () {
 
     return (((cx - testX) * (cx - testX) + (cy - testY) * (cy - testY)) < r * r);
     }
-
+	
+    //Función que comprueba si la bola está en contacto con algún borde de la pantalla
     function testCollisionWithWalls(ball, w, h) {
-        // TU CÓDIGO AQUÍ
+        // derecha
         if (ball.x > w - ball.diameter / 2) {
             ball.angle = -ball.angle + Math.PI;
             ball.x = w - ball.diameter / 2;
@@ -86,38 +82,37 @@ window.onload = function () {
             ball.y = ball.diameter / 2;
             return false;
         }
-
     }
 
 
-    // función auxiliar
+    //Función para calcular el número de píxeles que hay que moverse para alcanzar la velocidad indicada (speed)
     var calcDistanceToMove = function(delta, speed) {
-    // TU CÓDIGO AQUÍ
         return (speed * delta) / 1000.0;
     };
 
-
+    //Función para crear la pelota
     function Ball(x, y, angle, v, diameter, sticky) {
-    // TU CÓDIGO AQUÍ
+    //Se declaran las variables
     this.x = x;
     this.y = y;
     this.angle = angle;
     this.v = v;
     this.diameter = diameter;
     this.sticky = sticky;
+    //Se dibuja en el canvas
     this.draw = function(ctx) {
-        // TU CÓDIGO AQUÍ
-            ctx.beginPath();
+        ctx.beginPath();
         ctx.save();
+		//Se dibuja el contorno
         ctx.arc(this.x, this.y, this.diameter / 2, 0, 2 * Math.PI);
+		//Se pinta rellena de color rojo
         ctx.fillStyle = "red";
         ctx.fill();
         ctx.stroke();
         ctx.restore();
     };
-
+    //Mueve la bola a la posición x e y 
     this.move = function(x, y) {
-        // TU CÓDIGO AQUÍ
         if (x != undefined && y != undefined) {
             this.x = x;
             this.y = y;
@@ -129,452 +124,430 @@ window.onload = function () {
             this.y -= calcDistanceToMove(delta, incY);
         }
     };
-
     }
 
-    // Inits
+    //Llama a comenzar el juego
     window.onload = function init() {
         var game = new GF();
         game.start();
     };
 
-
-    // GAME FRAMEWORK STARTS HERE
+    //Instancia de juego
     var GF = function() {
+	    
+		//Se declaran las variables
+		var frameCount = 0;
+		var lastTime;
+		var fpsContainer;
+		var fps, oldTime = 0;
+		var music;
+		var sonidos;
 
-    // vars for counting frames/s, used by the measureFPS function
-    var frameCount = 0;
-    var lastTime;
-    var fpsContainer;
-    var fps, oldTime = 0;
-    var music;
-    var sonidos;
+		var balls = [];
+		var bricks = [];
+		var bricksLeft;
 
-    //  var speed = 300; // px/s 
-    //  var vausWidth = 30,   vausHeight = 10;
+		var terrainPattern;
 
-    var balls = [];
-    var bricks = [];
-    var bricksLeft;
+		var lifes = 3;
 
-    var terrainPattern;
+		var bonuses = [];
 
-    var lifes = 3;
+		var inputStates = {};
 
-    var bonuses = [];
+		//Estados del juego
+		var gameStates = {
+			0: "running",
+			1: "gameOver"
+		};
 
-    // vars for handling inputs
-    var inputStates = {};
+		var currentGameState = "running" ;
 
-    // game states
-    var gameStates = {
-        // TU CÓDIGO AQUÍ
-        0: "running",
-        1: "gameOver"
+		//Se declara la raqueta 
+		var paddle = {
+			dead: false,
+			x: 10,
+			y: 130,
+			width: 32,
+			height: 8,
+			speed: 300, // pixels/s 
+			sticky: false,
+			sprite: new Sprite('img/sprites.png', [224,40], [32,8], 16, [0,1])
+		};
+			
+		//Se declaran los ladrillos
+		var ladrillos = [
+			// grey
+			{
+				x: 20,
+				y: 20,
+				c: 'grey'
+				}, {
+				x: (20 * 2 + ANCHURA_LADRILLO),
+				y: 20,
+				c: 'grey'
+				}, {
+				x: 20 * 3 + ANCHURA_LADRILLO * 2,
+				y: 20,
+				c: 'grey'
+				}, {
+				x: 20 * 4 + ANCHURA_LADRILLO * 3,
+				y: 20,
+				c: 'grey'
+				}, {
+				x: 20 * 5 + ANCHURA_LADRILLO * 4,
+				y: 20,
+				c: 'grey'
+			},
+			// red
+			{
+				x: 20,
+				y: 42,
+				c: 'red'
+				}, {
+				x: 20 * 2 + ANCHURA_LADRILLO,
+				y: 42,
+				c: 'red'
+				}, {
+				x: 20 * 3 + ANCHURA_LADRILLO * 2,
+				y: 42,
+				c: 'red'
+				}, {
+				x: 20 * 4 + ANCHURA_LADRILLO * 3,
+				y: 42,
+				c: 'red'
+				}, {
+				x: 20 * 5 + ANCHURA_LADRILLO * 4,
+				y: 42,
+				c: 'red'
+			}
+		];
+	   
+		//Función para crear los ladrillos
+		var createBricks = function() {
+			for(let brick of ladrillos) {
+				bricks.push(new Brick(brick.x, brick.y, brick.c));
+				bricksLeft = bricks.length;
+			}
+		}
+
+		//Función para pintar los ladrillos en el canvas
+		var drawBricks = function() {
+			for(let brick of bricks) {
+				brick.draw(ctx);
+			}
+		};
+
+		//Función para calcular los FPS a los que va el juego
+		var measureFPS = function(newTime) {
+			//La primera ejecución tiene una condición especial
+			if (lastTime === undefined) {
+				lastTime = newTime;
+				return;
+			}
+			//Calcular el delta entre el frame actual y el anterior
+			var diffTime = newTime - lastTime;
+			if (diffTime >= 1000) {
+				fps = frameCount;
+				frameCount = 0;
+				lastTime = newTime;
+			}
+			//Mostrar los FPS en una capa del document que hemos construído en la función start()
+			fpsContainer.innerHTML = 'FPS: ' + fps;
+			frameCount++;
+		};
+
+		//Función para limpiar el contenido del canvas
+		function clearCanvas() {
+			ctx.clearRect(0, 0, w, h);
+			ctx.fillStyle = terrainPattern;
+			ctx.fillRect(0, 0, w, h);    
+		}
+
+		//Función para calcular si hay colisión entre la pelota y los ladrillos
+		function testBrickCollision(ball) {
+		//Comprueba si hay intersección con todos los ladrillos
+			for(let i = 0; i < bricks.length; i++)  {
+			b = bricks[i];
+		//Llama a la función intersec que devuelve si hay o no intersección y el lado del ladrillo con el que hay intersección
+			let res = intersects(b.x, b.y, b.x+ANCHURA_LADRILLO, b.y+ALTURA_LADRILLO, ball.x, ball.y, ball.diameter/2 );
+		 //Si hay colisión
+			if(res.c) {
+				//Insertamos sonido
+				sonidos.play("point");
+			//Lado del choque
+				switch(res.d) {
+				case "bottom":
+					ball.angle = -ball.angle;
+					ball.y = b.y + ALTURA_LADRILLO + ball.diameter / 2;
+					break;
+				case "top":
+					ball.angle = -ball.angle;
+					ball.y = b.y - ball.diameter / 2;
+					break;
+				case "right":
+					ball.angle = -ball.angle + Math.PI;
+					ball.x = b.x + ANCHURA_LADRILLO + ball.diameter / 2;
+					break;
+				case "left":
+					ball.angle = -ball.angle + Math.PI;
+					ball.x = b.x - ball.diameter / 2;
+					break;
+				}
+			//Eliminamos el ladrillo
+				bricks.splice(i, 1);
+			//Aumentamos velocidad de la bola
+				paddle.speed += 20;
+			}
+			}
+			//Devuelve el número de ladrillos que quedan
+			return bricks.length;
+		}
+
+		// Función para pintar la raqueta "Vaus" en el canvas
+		function drawVaus(x, y) {
+			ctx.save();
+			ctx.translate(x,y);
+			paddle.sprite.render(ctx);
+			ctx.restore();
+		}
+			
+		//Función para pintar las vidas en el canvas
+		function displayLifes() {
+			ctx.save();
+			ctx.fillStyle = "yellow";
+			ctx.fillText(`Vidas: ${lifes}`, w-40, 8);
+			ctx.restore();
+		}
+
+		//Función para actualizar la posición de la raquete con las flechas
+		var updatePaddlePosition = function() {
+			paddle.sprite.update(delta);
+			var incX = Math.ceil(calcDistanceToMove(delta, paddle.speed));
+		//Si pulsa la flecha de la izquierda
+			if (inputStates.left == 1) {
+			//Se mueve la raqueta a la izquierda
+				paddle.x = paddle.x - incX;
+			}
+		//Si pulsa la flecha de la derecha
+			if (inputStates.right == 1) {
+			//Se mueve la raqueta a la derecha
+				paddle.x = paddle.x + incX;
+			}
+		//Si llega al límite de la izquierda no se modifica más
+			if (paddle.x < 0) {
+				paddle.x = 0;
+			}
+		//Si llega al límite de la derecha no se modifica más
+			if (paddle.x + paddle.width > w) {
+				paddle.x = w - paddle.width;
+			}
+		}
+
+		//Función para actualizar las bolas restantes
+		function updateBalls() {
+			for (var i = balls.length - 1; i >= 0; i--) {
+				var ball = balls[i];
+				ball.move();
+				//Comprueba si ha golpeado con la pared de abajo
+				var die = testCollisionWithWalls(ball, w, h);
+				//Si ha golpeado con la pared de abajo (ha perdido)
+				if (die) {
+					balls.splice(i, 1);
+					if (balls.length == 0) {
+						//Se elimina una vida
+						lifes -= 1;
+						paddle.dead = true;
+					}
+					if(lifes > 0){
+						new_ball = new Ball( paddle.x + (paddle.width/2), paddle.y, Math.PI / 3, 100, 6, false);
+						balls.push(new_ball);
+					}
+				}
+				//Comprueba si la bola ha dado con algún ladrillo
+				bricksLeft = testBrickCollision(ball);
+				//Comprueba si hay colisión entre la raqueta y la bola y gestiona su rebote
+				if (circRectsOverlap(paddle.x, paddle.y, paddle.width, paddle.height, ball.x, ball.y, ball.diameter/2)) {
+					ball.y = paddle.y - ball.diameter/2;
+					ball.angle = -ball.angle;
+					if (inputStates.right){
+						ball.angle = ball.angle * (ball.angle < 0 ? 0.5 : 1.5);
+					}
+					else if (inputStates.left){
+						ball.angle = ball.angle * (ball.angle > 0 ? 0.5 : 1.5);
+					}
+					sonidos.play("paddle");
+				}
+				ball.draw(ctx);
+			}
+		}
+
+		function timer(currentTime) {
+			var aux = currentTime - oldTime;
+			oldTime = currentTime;
+			return aux;
+		}
+
+		//Función para crear los bonus
+		function Bonus(){
+			this.type = 'C';
+			this.x = 50;
+			this.y = 50;
+			this.width= 16;
+			this.height= 8;
+			this.speed= 80;
+			this.sprite= new Sprite('img/sprites.png', [224,0], [16,8], 0.5, [0,1,2,3]);
+		};
+
+		Bonus.prototype = {
+			//Pinta el bonus en su posición
+			draw : function(ctx){
+				ctx.save();
+				ctx.translate(this.x, this.y);
+				this.sprite.render(ctx);
+
+				ctx.restore();
+			},
+			//Mueve el bonus hacia abajo
+			move : function(){
+				this.sprite().update(delta);
+				this.y += calcDistanceToMove(delta, this.speed);
+			}
+		};
+
+
+		var mainLoop = function(time) {
+			//Calcula los frames
+			measureFPS(time);
+
+			//Number of ms since last frame draw
+			delta = timer(time);
+
+			//Limpia el canvas
+			clearCanvas();
+
+			// Si se ha perdido una vida, comprobar si quedan más 
+			// si no --> Game Over
+			// si quedan más --> sacar una nueva bola (y actualizar el atributo paddle.dead)
+			if (lifes == 0) {
+				currentGameState = gameStates[1];
+			}
+
+			// SI currentGameState = en ejecución
+			// todo sigue como antes: 
+			if(currentGameState == gameStates[0]){
+				// Mover Vaus de izquierda a derecha
+				updatePaddlePosition();
+				
+				//Modificar la bola
+				updateBalls();
+
+				// draw Vaus
+				drawVaus(paddle.x, paddle.y);
+
+				// dibujar ladrillos
+				drawBricks();
+				
+				//Mostrar las vidas
+				displayLifes();
+
+				//Modificar el bonus
+				//updateBonus();
+
+				// call the animation loop every 1/60th of second
+				requestAnimationFrame(mainLoop);
+			}
+			// PERO Si currentGameState = GAME OVER
+			// PINTAR la pantalla de negro y escribir GAME OVER
+			else{
+				ctx.fillStyle = "black";
+				ctx.fillRect(0, 0, w, h);
+
+				ctx.fillStyle = "white";
+				ctx.fillText("GAME OVER", w/2 - 35, h/2 + 5); 
+			}       
+		};
+
+		function initTerrain(){
+			//Se obtiene la imagen que queremos para el fondo de pantalla
+			terrain = new Sprite('img/sprites.png', [49, 80], [31, 31]);
+			//Creamos el wallpaper repitiendo la imagen escogida
+			terrainPattern = ctx.createPattern(terrain.image(), 'repeat');
+		}
+
+		//Función para controlar las teclas pulsadas para mover la raqueta
+		function inicializarGestorTeclado() {
+			document.addEventListener('keydown', (e) => {
+				if (e.code === "ArrowLeft") {
+					inputStates.left = 1;
+				} else if (e.code === "ArrowRight") {
+					inputStates.right = 1;
+				}
+			});
+			document.addEventListener('keyup', (e) => {
+				if (e.code === "ArrowLeft") {
+					inputStates.left = 0;
+				} else if (e.code === "ArrowRight") {
+					inputStates.right = 0;
+				} else if (e.code === "Space") {
+			}
+			});
+		}
+
+		function loadAssets(callback){
+			//Cargar sonido asíncronamente usando howler.js
+			music = new Howl({
+				urls: ['music/Game_Start.ogg'],
+				volume: 1,
+				onload: function() {
+					callback();
+				}
+			});
+
+			sonidos = new Howl({
+				urls : ['music/sounds.mp3'],
+				volume : 1,
+				sprite : {
+					point: [0,700],
+					salir: [1000,1700],
+					empezar: [3000,2700],
+					paddle : [11200, 700],
+				},
+				oload : function(){
+					callback();
+				}
+			});
+		}
+
+		function init(){
+			loadAssets(startNewGame);
+		}
+		
+		//Crea un nuevo juego
+		function startNewGame(){
+			initTerrain();
+			balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
+			createBricks();
+			music.play();
+			bonuses.push(new Bonus());
+			requestAnimationFrame(mainLoop);
+		}
+		
+		var start = function() {
+			fpsContainer = document.createElement('div');
+			document.body.appendChild(fpsContainer);
+
+			inicializarGestorTeclado();
+
+			resources.load(['img/sprites.png']);
+			resources.onReady(init);
+		};
+
+		//our GameFramework returns a public API visible from outside its scope
+		return {
+			start: start
+		};
     };
-
-    var currentGameState = "running" ;    // TU CÓDIGO AQUÍ
-
-
-    // VAUS en objeto literal 
-    var paddle = {
-        dead: false,
-        x: 10,
-        y: 130,
-        width: 32,
-        height: 8,
-        speed: 300, // pixels/s 
-        sticky: false,
-        sprite: new Sprite('img/sprites.png', [224,40], [32,8], 16, [0,1])
-    };
-
-
-
-    var ladrillos = [
-        // grey
-        {
-        x: 20,
-        y: 20,
-        c: 'grey'
-        }, {
-        x: (20 * 2 + ANCHURA_LADRILLO),
-        y: 20,
-        c: 'grey'
-        }, {
-        x: 20 * 3 + ANCHURA_LADRILLO * 2,
-        y: 20,
-        c: 'grey'
-        }, {
-        x: 20 * 4 + ANCHURA_LADRILLO * 3,
-        y: 20,
-        c: 'grey'
-        }, {
-        x: 20 * 5 + ANCHURA_LADRILLO * 4,
-        y: 20,
-        c: 'grey'
-        },
-        // red
-        {
-        x: 20,
-        y: 42,
-        c: 'red'
-        }, {
-        x: 20 * 2 + ANCHURA_LADRILLO,
-        y: 42,
-        c: 'red'
-        }, {
-        x: 20 * 3 + ANCHURA_LADRILLO * 2,
-        y: 42,
-        c: 'red'
-        }, {
-        x: 20 * 4 + ANCHURA_LADRILLO * 3,
-        y: 42,
-        c: 'red'
-        }, {
-        x: 20 * 5 + ANCHURA_LADRILLO * 4,
-        y: 42,
-        c: 'red'
-        }
-    ];
-
-
-
-    var createBricks = function() {
-        // TU CÓDIGO AQUÍ
-        for(let brick of ladrillos) {
-        bricks.push(new Brick(brick.x, brick.y, brick.c));
-        bricksLeft = bricks.length;
-        }
-    }
-
-    var drawBricks = function() {
-        // TU CÓDIGO AQUÍ
-        for(let brick of bricks) {
-        brick.draw(ctx);
-        }
-    };
-
-    var measureFPS = function(newTime) {
-
-        // test for the very first invocation
-        if (lastTime === undefined) {
-        lastTime = newTime;
-        return;
-        }
-
-        //calculate the difference between last & current frame
-        var diffTime = newTime - lastTime;
-
-        if (diffTime >= 1000) {
-
-        fps = frameCount;
-        frameCount = 0;
-        lastTime = newTime;
-        }
-
-        //and display it in an element we appended to the 
-        // document in the start() function
-        fpsContainer.innerHTML = 'FPS: ' + fps;
-        frameCount++;
-    };
-
-    // clears the canvas content
-    function clearCanvas() {
-        ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = terrainPattern;
-        ctx.fillRect(0, 0, w, h);    
-    }
-
-
-    function testBrickCollision(ball) {
-        // TU CÓDIGO AQUÍ
-        for(let i = 0; i < bricks.length; i++)  {
-        b = bricks[i];
-        let res = intersects(b.x, b.y, b.x+ANCHURA_LADRILLO, b.y+ALTURA_LADRILLO, ball.x, ball.y, ball.diameter/2 );
-
-        if(res.c) { // si hay colision
-            //Insertamos sonido
-            sonidos.play("point");
-            switch(res.d) { // lado del choque
-            case "bottom":
-                ball.angle = -ball.angle;
-                ball.y = b.y + ALTURA_LADRILLO + ball.diameter / 2;
-                break;
-            case "top":
-                ball.angle = -ball.angle;
-                ball.y = b.y - ball.diameter / 2;
-                break;
-            case "right":
-                ball.angle = -ball.angle + Math.PI;
-                ball.x = b.x + ANCHURA_LADRILLO + ball.diameter / 2;
-                break;
-            case "left":
-                ball.angle = -ball.angle + Math.PI;
-                ball.x = b.x - ball.diameter / 2;
-                break;
-            }
-            bricks.splice(i, 1); // eliminamos el ladrillo
-            paddle.speed += 20; // aumentamos velocidad de la bola
-        }
-        }
-
-        // devuelve el número de ladrillos que quedan
-        return bricks.length;
-    }
-
-    // Función para pintar la raqueta Vaus
-    function drawVaus(x, y) {
-        // TU CÓDIGO AQUÍ
-        //ctx.beginPath();
-        ctx.save();
-        ctx.translate(x,y);
-        paddle.sprite.render(ctx);
-        //ctx.fillStyle = "black";
-        //ctx.fillRect(x, y, 30, 10);
-        //ctx.fill();
-        //ctx.stroke();
-        ctx.restore();
-    }
-
-    function displayLifes() {
-        // TU CÓDIGO AQUÍ
-        ctx.save();
-        ctx.fillStyle = "yellow";
-        ctx.fillText(`Vidas: ${lifes}`, w-40, 8);
-        ctx.restore();
-    }
-
-    var updatePaddlePosition = function() {
-        paddle.sprite.update(delta);
-        var incX = Math.ceil(calcDistanceToMove(delta, paddle.speed));
-        // TU CÓDIGO AQUÍ
-        if (inputStates.left == 1) {
-            paddle.x = paddle.x - incX;
-            //ball.angle = ball.angle * (ball.angle > 0 ? 0.5 : 1.5);
-        }
-        if (inputStates.right == 1) {
-            paddle.x = paddle.x + incX;
-            //ball.angle = ball.angle * (ball.angle < 0 ? 0.5 : 1.5)
-        }
-        if (paddle.x < 0) {
-            paddle.x = 0;
-        }
-        if (paddle.x + paddle.width > w) {
-            paddle.x = w - paddle.width;
-        }
-    }
-
-
-    function updateBalls() {
-        for (var i = balls.length - 1; i >= 0; i--) {
-        var ball = balls[i];
-        ball.move();
-
-        var die = testCollisionWithWalls(ball, w, h);
-
-        // TU CÓDIGO AQUÍ
-        // Nuevo: gestiona la pérdida de una bola usando los atributos de paddle
-                if (die) {
-            balls.splice(i, 1);
-            if (balls.length == 0) {
-            lifes -= 1;
-            paddle.dead = true;
-            }
-            if(lifes > 0){
-            new_ball = new Ball( paddle.x + (paddle.width/2), paddle.y, Math.PI / 3, 100, 6, false);
-            balls.push(new_ball);
-            }
-        }
-        // NUEVO
-        // test if ball collides with any brick
-        bricksLeft = testBrickCollision(ball);
-
-        // TU CÓDIGO AQUÍ
-        // Test if the paddle collides
-        // NUEVO: Gestiona el rebote de la bola con Vaus usando los atributos de paddle
-        if (circRectsOverlap(paddle.x, paddle.y, paddle.width, paddle.height, ball.x, ball.y, ball.diameter/2)) {
-            ball.y = paddle.y - ball.diameter/2;
-            ball.angle = -ball.angle;
-            if (inputStates.right){
-                ball.angle = ball.angle * (ball.angle < 0 ? 0.5 : 1.5);
-            }else if (inputStates.left){
-                ball.angle = ball.angle * (ball.angle > 0 ? 0.5 : 1.5);
-            }
-            sonidos.play("paddle");
-        }
-            ball.draw(ctx);
-        }
-    }
-
-    function timer(currentTime) {
-        var aux = currentTime - oldTime;
-        oldTime = currentTime;
-        return aux;
-
-    }
-
-    function Bonus(){
-        this.type = 'C';
-        this.x = 50;
-        this.y = 50;
-        this.width= 16;
-        this.height= 8;
-        this.speed= 80;
-        this.sprite= new Sprite('img/sprites.png', [224,0], [16,8], 0.5, [0,1,2,3]);
-    };
-
-    Bonus.prototype = {
-        draw : function(ctx){
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            this.sprite.render(ctx);
-
-            ctx.restore();
-        },
-        move : function(){
-            this.sprite().update(delta);
-            this.y += calcDistanceToMove(delta, this.speed);
-        }
-    };
-
-
-    var mainLoop = function(time) {
-        //main function, called each frame 
-        measureFPS(time);
-
-        // number of ms since last frame draw
-        delta = timer(time);
-
-        // Clear the canvas
-        clearCanvas();
-
-        // TU CÓDIGO AQUÍ
-        // NUEVO
-        // Si se ha perdido una vida, comprobar si quedan más 
-        // si no --> Game Over
-        // si quedan más --> sacar una nueva bola (y actualizar el atributo paddle.dead)
-            if (lifes == 0) {
-            currentGameState = gameStates[1];
-        }
-
-        // TU CÓDIGO AQUÍ
-        // SI currentGameState = en ejecución
-        // todo sigue como antes: 
-            if(currentGameState == gameStates[0]){
-        // Mover Vaus de izquierda a derecha
-        updatePaddlePosition();
-        
-        //Modificar la bola
-        updateBalls();
-
-        // draw Vaus
-        drawVaus(paddle.x, paddle.y);
-
-        // dibujar ladrillos
-        drawBricks();
-        
-        //Mostrar las vidas
-        displayLifes();
-
-        //Modificar el bonus
-        //updateBonus();
-
-        // call the animation loop every 1/60th of second
-        requestAnimationFrame(mainLoop);
-        }
-        // PERO Si currentGameState = GAME OVER
-        // PINTAR la pantalla de negro y escribir GAME OVER
-            else{
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.fillStyle = "white";
-        ctx.fillText("GAME OVER", w/2 - 35, h/2 + 5); 
-        }       
-    };
-
-    function initTerrain(){
-        //Se obtiene la imagen que queremos para el fondo de pantalla
-        terrain = new Sprite('img/sprites.png', [49, 80], [31, 31]);
-        //Creamos el wallpaper repitiendo la imagen escogida
-        terrainPattern = ctx.createPattern(terrain.image(), 'repeat');
-    }
-
-    function inicializarGestorTeclado() {
-        document.addEventListener('keydown', (e) => {
-        if (e.code === "ArrowLeft") {
-            inputStates.left = 1;
-        } else if (e.code === "ArrowRight") {
-            inputStates.right = 1;
-        }
-        });
-        document.addEventListener('keyup', (e) => {
-        if (e.code === "ArrowLeft") {
-            inputStates.left = 0;
-        } else if (e.code === "ArrowRight") {
-            inputStates.right = 0;
-        } else if (e.code === "Space") {
-        }
-        });
-    }
-
-    function loadAssets(callback){
-        // Cargar sonido asíncronamente usando howler.js
-	    music = new Howl({
-		    urls: ['music/Game_Start.ogg'],
-		  volume: 1,
-		  onload: function() {
-          	callback();
-          }
-         }); // new Howl
-
-         sonidos = new Howl({
-            urls : ['music/sounds.mp3'],
-            volume : 1,
-            sprite : {
-                point: [0,700],
-                salir: [1000,1700],
-                empezar: [3000,2700],
-                paddle : [11200, 700],
-            },
-            oload : function(){
-                callback();
-            }
-        });
-    }
-
-    function init(){
-        loadAssets(startNewGame);
-        //startNewGame();
-    }
-
-    function startNewGame(){
-        initTerrain();
-        balls.push(new Ball(10, 70, Math.PI / 3, 100, 6, false));
-        createBricks();
-        music.play();
-        bonuses.push(new Bonus());
-        requestAnimationFrame(mainLoop);
-    }
-    
-    var start = function() {
-        // adds a div for displaying the fps value
-        fpsContainer = document.createElement('div');
-        document.body.appendChild(fpsContainer);
-
-        inicializarGestorTeclado();
-
-        resources.load(['img/sprites.png']);
-        resources.onReady(init);
-    };
-
-    //our GameFramework returns a public API visible from outside its scope
-    return {
-        start: start
-    };
-    };
-
-
     var game = new GF();
     game.start();
 }
